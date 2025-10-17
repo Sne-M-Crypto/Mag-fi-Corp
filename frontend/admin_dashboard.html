@@ -1,0 +1,1548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAG-Fi AI - Admin Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #F9FAFB; color: #111827; }
+        .navbar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .nav-brand h2 { margin: 0; font-size: 1.5rem; }
+        .nav-menu { display: flex; align-items: center; gap: 1rem; }
+        .dashboard-container { display: flex; min-height: calc(100vh - 70px); }
+        .sidebar { width: 250px; background: #1F2937; color: white; padding: 2rem 0; }
+        .sidebar-menu { list-style: none; }
+        .menu-item { padding: 1rem 2rem; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 0.75rem; }
+        .menu-item:hover { background: rgba(255,255,255,0.1); }
+        .menu-item.active { background: #4F46E5; border-left: 4px solid white; }
+        .main-content { flex: 1; padding: 2rem; overflow-y: auto; }
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .stat-card { background: white; padding: 1.5rem; border-radius: 0.75rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 1rem; }
+        .stat-icon { font-size: 2.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+        .stat-info h3 { margin: 0; font-size: 2rem; }
+        .stat-info p { margin: 0; color: #6B7280; font-size: 0.9rem; }
+        .card { background: white; border-radius: 0.75rem; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 1.5rem; }
+        .btn-primary, .btn-secondary { padding: 0.75rem 1.5rem; border: none; border-radius: 0.5rem; font-size: 1rem; font-weight: 500; cursor: pointer; transition: all 0.3s; }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-2px); }
+        .btn-secondary { background: #6B7280; color: white; }
+        .btn-secondary:hover { background: #4B5563; }
+        .form-group { margin-bottom: 1.5rem; }
+        label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+        input, select, textarea { width: 100%; padding: 0.75rem; border: 1px solid #E5E7EB; border-radius: 0.5rem; font-size: 1rem; }
+        .data-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        .data-table th, .data-table td { padding: 1rem; text-align: left; border-bottom: 1px solid #E5E7EB; }
+        .data-table th { background: #F9FAFB; font-weight: 600; }
+        .badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.875rem; font-weight: 500; }
+        .badge-success { background: #D1FAE5; color: #065F46; }
+        .badge-info { background: #DBEAFE; color: #1E40AF; }
+        .badge-danger { background: #FEE2E2; color: #991B1B; }
+        .badge-warning { background: #FEF3C7; color: #92400E; }
+        .btn-sm { padding: 0.5rem 1rem; font-size: 0.875rem; border: none; background: #667eea; color: white; border-radius: 0.375rem; cursor: pointer; margin-right: 0.5rem; }
+        .btn-sm:hover { opacity: 0.9; }
+        .btn-danger { background: #DC2626; }
+        .btn-danger:hover { background: #B91C1C; }
+        .text-secondary { color: #6B7280; }
+        .mt-3 { margin-top: 1.5rem; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.show { display: flex; }
+        .modal-content { background: white; border-radius: 1rem; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto; }
+        .modal-header { padding: 1.5rem; border-bottom: 1px solid #E5E7EB; display: flex; justify-content: space-between; align-items: center; }
+        .modal-body { padding: 1.5rem; }
+        .modal-footer { padding: 1.5rem; border-top: 1px solid #E5E7EB; display: flex; justify-content: flex-end; gap: 1rem; }
+        .close-modal { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6B7280; }
+        .close-modal:hover { color: #111827; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .chart-container { height: 300px; display: flex; align-items: center; justify-content: center; background: #F9FAFB; border-radius: 0.5rem; margin: 1rem 0; }
+        .compliance-card { border-left: 4px solid #667eea; }
+        .compliance-status { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; }
+        .status-indicator { width: 12px; height: 12px; border-radius: 50%; }
+        .status-green { background: #10B981; }
+        .status-yellow { background: #F59E0B; }
+        .status-red { background: #EF4444; }
+        .report-card { cursor: pointer; transition: all 0.3s; }
+        .report-card:hover { transform: translateY(-4px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .report-icon { font-size: 2rem; margin-bottom: 1rem; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand"><h2>MAG-Fi AI - Admin Panel</h2></div>
+        <div class="nav-menu">
+            <span id="user-name">Admin User</span>
+            <button onclick="logout()" class="btn-secondary">Logout</button>
+        </div>
+    </nav>
+
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <ul class="sidebar-menu">
+                <li class="menu-item active" data-page="overview"><span>📊</span> Dashboard</li>
+                <li class="menu-item" data-page="users"><span>👥</span> User Management</li>
+                <li class="menu-item" data-page="audit"><span>🔍</span> Audit & Compliance</li>
+                <li class="menu-item" data-page="reports"><span>📈</span> Reports & Analytics</li>
+                <li class="menu-item" data-page="settings"><span>⚙️</span> System Settings</li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <!-- Dashboard Overview Section -->
+            <section id="overview-section" class="content-section active">
+                <h1>Admin Dashboard Overview</h1>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">👥</div>
+                        <div class="stat-info">
+                            <h3>24</h3>
+                            <p>Total Users</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🔐</div>
+                        <div class="stat-info">
+                            <h3>98%</h3>
+                            <p>System Uptime</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📋</div>
+                        <div class="stat-info">
+                            <h3>1,243</h3>
+                            <p>Audit Logs</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-info">
+                            <h3>Compliant</h3>
+                            <p>Security Status</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>System Health</h2>
+                    <div class="compliance-status">
+                        <span class="status-indicator status-green"></span>
+                        <span>All systems operational</span>
+                    </div>
+                    <div class="compliance-status">
+                        <span class="status-indicator status-green"></span>
+                        <span>Database backup completed</span>
+                    </div>
+                    <div class="compliance-status">
+                        <span class="status-indicator status-green"></span>
+                        <span>Security protocols active</span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>Recent Administrative Activity</h2>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Activity</th>
+                                <th>User</th>
+                                <th>Time</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>User Account Created</td>
+                                <td>admin@magfi.com</td>
+                                <td>10 minutes ago</td>
+                                <td><span class="badge badge-success">Success</span></td>
+                            </tr>
+                            <tr>
+                                <td>Security Audit Completed</td>
+                                <td>System</td>
+                                <td>1 hour ago</td>
+                                <td><span class="badge badge-success">Passed</span></td>
+                            </tr>
+                            <tr>
+                                <td>Report Generated</td>
+                                <td>admin@magfi.com</td>
+                                <td>3 hours ago</td>
+                                <td><span class="badge badge-info">Completed</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- User Management Section -->
+            <section id="users-section" class="content-section">
+                <div class="section-header">
+                    <h1>User Management</h1>
+                    <button class="btn-primary" onclick="showAddUserModal()">+ Add User</button>
+                </div>
+                
+                <div class="card">
+                    <h2>User Accounts</h2>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Last Login</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-list">
+                            <tr>
+                                <td>Admin User</td>
+                                <td>admin@magfi.com</td>
+                                <td><span class="badge badge-danger">Administrator</span></td>
+                                <td><span class="badge badge-success">Active</span></td>
+                                <td>2025-10-17 14:23</td>
+                                <td>
+                                    <button class="btn-sm" onclick="editUser(1)">Edit</button>
+                                    <button class="btn-sm btn-danger" onclick="deleteUser(1)">Delete</button>
+                                    <button class="btn-sm" onclick="viewUserActivity(1)">Activity</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>HR Manager</td>
+                                <td>hr@magfi.com</td>
+                                <td><span class="badge badge-info">HR User</span></td>
+                                <td><span class="badge badge-success">Active</span></td>
+                                <td>2025-10-17 13:45</td>
+                                <td>
+                                    <button class="btn-sm" onclick="editUser(2)">Edit</button>
+                                    <button class="btn-sm btn-danger" onclick="deleteUser(2)">Delete</button>
+                                    <button class="btn-sm" onclick="viewUserActivity(2)">Activity</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Sarah Johnson</td>
+                                <td>sarah.j@magfi.com</td>
+                                <td><span class="badge badge-info">HR User</span></td>
+                                <td><span class="badge badge-success">Active</span></td>
+                                <td>2025-10-17 12:30</td>
+                                <td>
+                                    <button class="btn-sm" onclick="editUser(3)">Edit</button>
+                                    <button class="btn-sm btn-danger" onclick="deleteUser(3)">Delete</button>
+                                    <button class="btn-sm" onclick="viewUserActivity(3)">Activity</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Michael Chen</td>
+                                <td>michael.c@magfi.com</td>
+                                <td><span class="badge badge-info">HR User</span></td>
+                                <td><span class="badge badge-warning">Inactive</span></td>
+                                <td>2025-10-15 09:15</td>
+                                <td>
+                                    <button class="btn-sm" onclick="editUser(4)">Edit</button>
+                                    <button class="btn-sm btn-danger" onclick="deleteUser(4)">Delete</button>
+                                    <button class="btn-sm" onclick="viewUserActivity(4)">Activity</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card mt-3">
+                    <h2>User Roles & Permissions</h2>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Role</th>
+                                <th>Users</th>
+                                <th>Permissions</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="badge badge-danger">Administrator</span></td>
+                                <td>1</td>
+                                <td>Full system access, user management, audit logs</td>
+                                <td><button class="btn-sm" onclick="managePermissions('admin')">Manage</button></td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge badge-info">HR User</span></td>
+                                <td>3</td>
+                                <td>Job management, CV screening, candidate management</td>
+                                <td><button class="btn-sm" onclick="managePermissions('hr')">Manage</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Audit & Compliance Section -->
+            <section id="audit-section" class="content-section">
+                <div class="section-header">
+                    <h1>Audit & Compliance</h1>
+                    <button class="btn-primary" onclick="exportAuditLog()">Export Logs</button>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card compliance-card">
+                        <div class="stat-info">
+                            <h3>Security Compliance</h3>
+                            <div class="compliance-status">
+                                <span class="status-indicator status-green"></span>
+                                <span>GDPR Compliant</span>
+                            </div>
+                            <div class="compliance-status">
+                                <span class="status-indicator status-green"></span>
+                                <span>Data Encryption Active</span>
+                            </div>
+                            <div class="compliance-status">
+                                <span class="status-indicator status-green"></span>
+                                <span>Access Controls Enabled</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card compliance-card">
+                        <div class="stat-info">
+                            <h3>System Monitoring</h3>
+                            <div class="compliance-status">
+                                <span class="status-indicator status-green"></span>
+                                <span>All Services Running</span>
+                            </div>
+                            <div class="compliance-status">
+                                <span class="status-indicator status-yellow"></span>
+                                <span>1 Warning Detected</span>
+                            </div>
+                            <div class="compliance-status">
+                                <span class="status-indicator status-green"></span>
+                                <span>Backup Status: OK</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>Audit Log Filters</h2>
+                    <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                        <select style="padding: 0.75rem; width: auto;">
+                            <option value="">All Actions</option>
+                            <option value="login">Login/Logout</option>
+                            <option value="user">User Management</option>
+                            <option value="data">Data Access</option>
+                            <option value="system">System Changes</option>
+                            <option value="security">Security Events</option>
+                        </select>
+                        <select style="padding: 0.75rem; width: auto;">
+                            <option value="">All Users</option>
+                            <option value="admin">Administrators</option>
+                            <option value="hr">HR Users</option>
+                        </select>
+                        <input type="date" style="padding: 0.75rem; width: auto;">
+                        <button class="btn-primary">Apply Filters</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>Detailed Audit Logs</h2>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>User</th>
+                                <th>Action Type</th>
+                                <th>Details</th>
+                                <th>IP Address</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="audit-logs">
+                            <tr>
+                                <td>2025-10-17 14:23:15</td>
+                                <td>admin@magfi.com</td>
+                                <td><span class="badge badge-info">Login</span></td>
+                                <td>Successful administrator login</td>
+                                <td>192.168.1.100</td>
+                                <td><span class="badge badge-success">Success</span></td>
+                            </tr>
+                            <tr>
+                                <td>2025-10-17 13:45:32</td>
+                                <td>hr@magfi.com</td>
+                                <td><span class="badge badge-warning">Data Access</span></td>
+                                <td>Accessed candidate database</td>
+                                <td>192.168.1.101</td>
+                                <td><span class="badge badge-success">Success</span></td>
+                            </tr>
+                            <tr>
+                                <td>2025-10-17 12:18:47</td>
+                                <td>admin@magfi.com</td>
+                                <td><span class="badge badge-danger">User Management</span></td>
+                                <td>Created new user account: sarah.j@magfi.com</td>
+                                <td>192.168.1.100</td>
+                                <td><span class="badge badge-success">Success</span></td>
+                            </tr>
+                            <tr>
+                                <td>2025-10-17 11:30:22</td>
+                                <td>hr@magfi.com</td>
+                                <td><span class="badge badge-info">Login</span></td>
+                                <td>Successful HR user login</td>
+                                <td>192.168.1.101</td>
+                                <td><span class="badge badge-success">Success</span></td>
+                            </tr>
+                            <tr>
+                                <td>2025-10-17 10:15:08</td>
+                                <td>admin@magfi.com</td>
+                                <td><span class="badge badge-danger">System Change</span></td>
+                                <td>Updated security settings</td>
+                                <td>192.168.1.100</td>
+                                <td><span class="badge badge-success">Success</span></td>
+                            </tr>
+                            <tr>
+                                <td>2025-10-17 09:42:33</td>
+                                <td>unknown</td>
+                                <td><span class="badge badge-danger">Security</span></td>
+                                <td>Failed login attempt</td>
+                                <td>203.45.67.89</td>
+                                <td><span class="badge badge-danger">Failed</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card mt-3">
+                    <h2>Compliance Checklist</h2>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Requirement</th>
+                                <th>Status</th>
+                                <th>Last Checked</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Data Encryption at Rest</td>
+                                <td><span class="badge badge-success">Compliant</span></td>
+                                <td>2025-10-17 00:00</td>
+                                <td><button class="btn-sm" onclick="verifyCompliance('encryption')">Verify</button></td>
+                            </tr>
+                            <tr>
+                                <td>Regular Security Audits</td>
+                                <td><span class="badge badge-success">Compliant</span></td>
+                                <td>2025-10-15 08:00</td>
+                                <td><button class="btn-sm" onclick="verifyCompliance('audit')">Verify</button></td>
+                            </tr>
+                            <tr>
+                                <td>User Access Reviews</td>
+                                <td><span class="badge badge-warning">Due Soon</span></td>
+                                <td>2025-10-10 10:00</td>
+                                <td><button class="btn-sm" onclick="verifyCompliance('access')">Verify</button></td>
+                            </tr>
+                            <tr>
+                                <td>Data Backup & Recovery</td>
+                                <td><span class="badge badge-success">Compliant</span></td>
+                                <td>2025-10-17 02:00</td>
+                                <td><button class="btn-sm" onclick="verifyCompliance('backup')">Verify</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Reports & Analytics Section -->
+            <section id="reports-section" class="content-section">
+                <h1>Reports & Analytics</h1>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-info">
+                            <h3>1,243</h3>
+                            <p>Total System Events</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">👥</div>
+                        <div class="stat-info">
+                            <h3>24</h3>
+                            <p>Active Users</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⚡</div>
+                        <div class="stat-info">
+                            <h3>98.7%</h3>
+                            <p>System Uptime</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📈</div>
+                        <div class="stat-info">
+                            <h3>+15%</h3>
+                            <p>Activity Growth</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>Generate Reports</h2>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                        <div class="card report-card" onclick="generateReport('user-activity')">
+                            <div class="report-icon">👥</div>
+                            <h3>User Activity Report</h3>
+                            <p class="text-secondary">Login patterns and user engagement</p>
+                        </div>
+                        <div class="card report-card" onclick="generateReport('security')">
+                            <div class="report-icon">🔐</div>
+                            <h3>Security Report</h3>
+                            <p class="text-secondary">Security events and compliance</p>
+                        </div>
+                        <div class="card report-card" onclick="generateReport('system')">
+                            <div class="report-icon">⚙️</div>
+                            <h3>System Performance</h3>
+                            <p class="text-secondary">Resource usage and performance</p>
+                        </div>
+                        <div class="card report-card" onclick="generateReport('audit')">
+                            <div class="report-icon">📋</div>
+                            <h3>Audit Summary</h3>
+                            <p class="text-secondary">Complete audit trail report</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mt-3">
+                    <h2>User Activity Analytics</h2>
+                    <div class="chart-container">
+                        <p class="text-secondary">User activity chart visualization would appear here</p>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Total Logins</th>
+                                <th>Last Active</th>
+                                <th>Actions Performed</th>
+                                <th>Avg Session Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>admin@magfi.com</td>
+                                <td>145</td>
+                                <td>2025-10-17 14:23</td>
+                                <td>328</td>
+                                <td>2h 15m</td>
+                            </tr>
+                            <tr>
+                                <td>hr@magfi.com</td>
+                                <td>203</td>
+                                <td>2025-10-17 13:45</td>
+                                <td>567</td>
+                                <td>3h 42m</td>
+                            </tr>
+                            <tr>
+                                <td>sarah.j@magfi.com</td>
+                                <td>89</td>
+                                <td>2025-10-17 12:30</td>
+                                <td>234</td>
+                                <td>1h 58m</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card mt-3">
+                    <h2>System Performance Metrics</h2>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Metric</th>
+                                <th>Current Value</th>
+                                <th>Average</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>API Response Time</td>
+                                <td>245ms</td>
+                                <td>230ms</td>
+                                <td><span class="badge badge-success">Good</span></td>
+                            </tr>
+                            <tr>
+                                <td>Database Query Time</td>
+                                <td>45ms</td>
+                                <td>52ms</td>
+                                <td><span class="badge badge-success">Excellent</span></td>
+                            </tr>
+                            <tr>
+                                <td>CPU Usage</td>
+                                <td>32%</td>
+                                <td>28%</td>
+                                <td><span class="badge badge-success">Normal</span></td>
+                            </tr>
+                            <tr>
+                                <td>Memory Usage</td>
+                                <td>4.2GB</td>
+                                <td>4.5GB</td>
+                                <td><span class="badge badge-success">Normal</span></td>
+                            </tr>
+                            <tr>
+                                <td>Error Rate</td>
+                                <td>0.02%</td>
+                                <td>0.05%</td>
+                                <td><span class="badge badge-success">Excellent</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card mt-3">
+                    <h2>Recent Reports</h2>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Report Name</th>
+                                <th>Generated By</th>
+                                <th>Date</th>
+                                <th>Type</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Monthly Security Audit</td>
+                                <td>admin@magfi.com</td>
+                                <td>2025-10-17</td>
+                                <td><span class="badge badge-danger">Security</span></td>
+                                <td>
+                                    <button class="btn-sm" onclick="downloadReport(1)">Download</button>
+                                    <button class="btn-sm" onclick="viewReport(1)">View</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>User Activity Summary</td>
+                                <td>admin@magfi.com</td>
+                                <td>2025-10-15</td>
+                                <td><span class="badge badge-info">Analytics</span></td>
+                                <td>
+                                    <button class="btn-sm" onclick="downloadReport(2)">Download</button>
+                                    <button class="btn-sm" onclick="viewReport(2)">View</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>System Performance Q3</td>
+                                <td>System</td>
+                                <td>2025-10-01</td>
+                                <td><span class="badge badge-success">Performance</span></td>
+                                <td>
+                                    <button class="btn-sm" onclick="downloadReport(3)">Download</button>
+                                    <button class="btn-sm" onclick="viewReport(3)">View</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- System Settings Section -->
+            <section id="settings-section" class="content-section">
+                <h1>System Settings</h1>
+                
+                <div class="card">
+                    <h2>AI Configuration</h2>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="gpt5-mini-enabled" checked onchange="toggleGPT5Mini()"> 
+                            Enable GPT-5 mini for all clients
+                        </label>
+                        <p style="color: #6B7280; font-size: 0.9rem; margin-top: 0.5rem;">
+                            Allow all system users to access GPT-5 mini AI model for enhanced functionality
+                        </p>
+                    </div>
+                    <div class="form-group">
+                        <label for="ai-timeout">AI Response Timeout (seconds)</label>
+                        <input type="number" id="ai-timeout" value="30" min="10" max="120">
+                    </div>
+                    <div class="form-group">
+                        <label for="max-requests">Maximum Requests per User (per hour)</label>
+                        <input type="number" id="max-requests" value="100" min="10" max="1000">
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>System Configuration</h2>
+                    <div class="form-group">
+                        <label for="system-name">System Name</label>
+                        <input type="text" id="system-name" value="MAG-Fi AI System">
+                    </div>
+                    <div class="form-group">
+                        <label for="session-timeout">Session Timeout (minutes)</label>
+                        <input type="number" id="session-timeout" value="30" min="5" max="240">
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="maintenance-mode"> 
+                            Maintenance Mode
+                        </label>
+                        <p style="color: #6B7280; font-size: 0.9rem; margin-top: 0.5rem;">
+                            Enable maintenance mode to restrict system access for updates
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>Security Settings</h2>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="two-factor-auth" checked> 
+                            Require Two-Factor Authentication
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label for="password-policy">Password Policy</label>
+                        <select id="password-policy">
+                            <option value="basic">Basic (8+ characters)</option>
+                            <option value="standard" selected>Standard (8+ chars, mixed case, numbers)</option>
+                            <option value="strict">Strict (12+ chars, mixed case, numbers, symbols)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-attempts">Max Login Attempts</label>
+                        <input type="number" id="login-attempts" value="5" min="3" max="10">
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>Email & Notifications</h2>
+                    <div class="form-group">
+                        <label for="smtp-server">SMTP Server</label>
+                        <input type="text" id="smtp-server" value="smtp.magfi.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="smtp-port">SMTP Port</label>
+                        <input type="number" id="smtp-port" value="587">
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="email-notifications" checked> 
+                            Enable Email Notifications
+                        </label>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <button class="btn-primary" onclick="saveSettings()">Save Settings</button>
+                    <button class="btn-secondary" onclick="resetSettings()">Reset to Defaults</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Add User Modal -->
+    <div id="add-user-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New User</h2>
+                <button class="close-modal" onclick="closeModal('add-user-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="add-user-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="user-first-name">First Name</label>
+                            <input type="text" id="user-first-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="user-last-name">Last Name</label>
+                            <input type="text" id="user-last-name" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="user-email">Email Address</label>
+                        <input type="email" id="user-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="user-role">Role</label>
+                        <select id="user-role" required>
+                            <option value="">Select role...</option>
+                            <option value="Administrator">Administrator</option>
+                            <option value="HR User">HR User</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="user-password">Password</label>
+                        <input type="password" id="user-password" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeModal('add-user-modal')">Cancel</button>
+                <button class="btn-primary" onclick="submitAddUser()">Add User</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize user info
+        const currentUser = JSON.parse(localStorage.getItem('user') || '{"name":"Admin User","email":"admin@magfi.com"}');
+        document.getElementById('user-name').textContent = currentUser.name || currentUser.email;
+
+        // Navigation functionality
+        const menuItems = document.querySelectorAll('.menu-item');
+        const contentSections = document.querySelectorAll('.content-section');
+
+        menuItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const page = item.getAttribute('data-page');
+                navigateToPage(page);
+            });
+        });
+
+        function navigateToPage(page) {
+            // Update active menu item
+            menuItems.forEach(item => {
+                if (item.getAttribute('data-page') === page) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+
+            // Update active content section
+            contentSections.forEach(section => {
+                if (section.id === `${page}-section`) {
+                    section.classList.add('active');
+                } else {
+                    section.classList.remove('active');
+                }
+            });
+
+            // Load data for specific sections
+            if (page === 'users') {
+                loadUsers();
+            } else if (page === 'audit') {
+                loadAuditLogs();
+            } else if (page === 'reports') {
+                loadReports();
+            } else if (page === 'settings') {
+                loadSettings();
+            }
+        }
+
+        // Modal functions
+        function showAddUserModal() {
+            document.getElementById('add-user-modal').classList.add('show');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
+        }
+
+        function submitAddUser() {
+            const firstName = document.getElementById('user-first-name').value;
+            const lastName = document.getElementById('user-last-name').value;
+            const email = document.getElementById('user-email').value;
+            const role = document.getElementById('user-role').value;
+            const password = document.getElementById('user-password').value;
+
+            if (!firstName || !lastName || !email || !role || !password) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            // Simulate API call
+            console.log('Adding user:', { firstName, lastName, email, role });
+            alert('User added successfully!');
+            closeModal('add-user-modal');
+            document.getElementById('add-user-form').reset();
+            loadUsers();
+        }
+
+        // User Management functions
+        // Enhanced User Management Functions
+        async function loadUsers() {
+            try {
+                const response = await fetch('/api/users');
+                const data = await response.json();
+                
+                const usersTableBody = document.getElementById('users-list');
+                usersTableBody.innerHTML = '';
+                
+                if (data.users && data.users.length > 0) {
+                    data.users.forEach(user => {
+                        const row = document.createElement('tr');
+                        const statusClass = user.active ? 'badge-success' : 'badge-warning';
+                        const statusText = user.active ? 'Active' : 'Inactive';
+                        const roleClass = user.role === 'Administrator' ? 'badge-danger' : 'badge-info';
+                        
+                        row.innerHTML = `
+                            <td>${user.fullName || 'N/A'}</td>
+                            <td>${user.email}</td>
+                            <td><span class="badge ${roleClass}">${user.role}</span></td>
+                            <td><span class="badge ${statusClass}">${statusText}</span></td>
+                            <td>${user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Never'}</td>
+                            <td>
+                                <button class="btn-sm" onclick="editUser(${user.id}, '${user.fullName}', '${user.email}', '${user.role}', ${user.active})">Edit</button>
+                                <button class="btn-sm btn-danger" onclick="deleteUser(${user.id}, '${user.fullName}')">Delete</button>
+                                <button class="btn-sm" onclick="viewUserActivity(${user.id}, '${user.fullName}')">Activity</button>
+                            </td>
+                        `;
+                        usersTableBody.appendChild(row);
+                    });
+                } else {
+                    usersTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No users found</td></tr>';
+                }
+            } catch (error) {
+                console.error('Error loading users:', error);
+                showNotification('Failed to load users', 'error');
+            }
+        }
+
+        function showAddUserModal() {
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center;';
+            modal.innerHTML = `
+                <div style="background: white; padding: 2rem; border-radius: 0.75rem; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto;">
+                    <h2 style="margin-bottom: 1.5rem;">Add New User</h2>
+                    <form id="add-user-form">
+                        <div class="form-group">
+                            <label for="new-full-name">Full Name</label>
+                            <input type="text" id="new-full-name" name="full_name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="new-email">Email</label>
+                            <input type="email" id="new-email" name="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="new-password">Password</label>
+                            <input type="password" id="new-password" name="password" required minlength="6">
+                        </div>
+                        <div class="form-group">
+                            <label for="new-role">Role</label>
+                            <select id="new-role" name="role" required>
+                                <option value="HR User">HR User</option>
+                                <option value="Administrator">Administrator</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="new-department">Department</label>
+                            <input type="text" id="new-department" name="department">
+                        </div>
+                        <div class="form-group">
+                            <label for="new-phone">Phone</label>
+                            <input type="tel" id="new-phone" name="phone">
+                        </div>
+                        <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
+                            <button type="button" class="btn-secondary" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
+                            <button type="submit" class="btn-primary">Add User</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            modal.className = 'modal-overlay';
+            document.body.appendChild(modal);
+            
+            document.getElementById('add-user-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                const userData = Object.fromEntries(formData);
+                
+                try {
+                    const response = await fetch('/api/users', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(userData)
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        showNotification('User created successfully!', 'success');
+                        modal.remove();
+                        loadUsers();
+                    } else {
+                        showNotification(result.message || 'Failed to create user', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error creating user:', error);
+                    showNotification('Failed to create user', 'error');
+                }
+            });
+        }
+
+        function editUser(userId, fullName, email, role, active) {
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center;';
+            modal.innerHTML = `
+                <div style="background: white; padding: 2rem; border-radius: 0.75rem; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto;">
+                    <h2 style="margin-bottom: 1.5rem;">Edit User</h2>
+                    <form id="edit-user-form">
+                        <div class="form-group">
+                            <label for="edit-full-name">Full Name</label>
+                            <input type="text" id="edit-full-name" value="${fullName}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-email">Email</label>
+                            <input type="email" id="edit-email" value="${email}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-role">Role</label>
+                            <select id="edit-role" required>
+                                <option value="HR User" ${role === 'HR User' ? 'selected' : ''}>HR User</option>
+                                <option value="Administrator" ${role === 'Administrator' ? 'selected' : ''}>Administrator</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="edit-active" ${active ? 'checked' : ''}> Active
+                            </label>
+                        </div>
+                        <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
+                            <button type="button" class="btn-secondary" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
+                            <button type="submit" class="btn-primary">Update User</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            modal.className = 'modal-overlay';
+            document.body.appendChild(modal);
+            
+            document.getElementById('edit-user-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const userData = {
+                    full_name: document.getElementById('edit-full-name').value,
+                    email: document.getElementById('edit-email').value,
+                    role: document.getElementById('edit-role').value,
+                    active: document.getElementById('edit-active').checked
+                };
+                
+                try {
+                    const response = await fetch(`/api/users/${userId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(userData)
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        showNotification('User updated successfully!', 'success');
+                        modal.remove();
+                        loadUsers();
+                    } else {
+                        showNotification(result.message || 'Failed to update user', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error updating user:', error);
+                    showNotification('Failed to update user', 'error');
+                }
+            });
+        }
+
+        async function deleteUser(userId, userName) {
+            if (confirm(`Are you sure you want to delete user "${userName}"? This action cannot be undone.`)) {
+                try {
+                    const response = await fetch(`/api/users/${userId}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        showNotification('User deleted successfully!', 'success');
+                        loadUsers();
+                    } else {
+                        showNotification(result.message || 'Failed to delete user', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error deleting user:', error);
+                    showNotification('Failed to delete user', 'error');
+                }
+            }
+        }
+
+        async function viewUserActivity(userId, userName) {
+            try {
+                const response = await fetch(`/api/audit/logs?user_id=${userId}`);
+                const data = await response.json();
+                
+                const modal = document.createElement('div');
+                modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center;';
+                
+                let activityHtml = `
+                    <div style="background: white; padding: 2rem; border-radius: 0.75rem; max-width: 800px; width: 90%; max-height: 90vh; overflow-y: auto;">
+                        <h2 style="margin-bottom: 1.5rem;">Activity Log - ${userName}</h2>
+                        <div style="max-height: 500px; overflow-y: auto;">
+                `;
+                
+                if (data.logs && data.logs.length > 0) {
+                    data.logs.forEach(log => {
+                        const timestamp = new Date(log.timestamp).toLocaleString();
+                        const statusClass = log.status === 'success' ? 'badge-success' : 'badge-danger';
+                        activityHtml += `
+                            <div style="border-bottom: 1px solid #E5E7EB; padding: 1rem 0;">
+                                <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 0.5rem;">
+                                    <strong>${log.action}</strong>
+                                    <span class="badge ${statusClass}" style="margin-left: auto;">${log.status}</span>
+                                </div>
+                                <div style="color: #6B7280; font-size: 0.9rem;">
+                                    <div>Resource: ${log.resource}</div>
+                                    <div>Time: ${timestamp}</div>
+                                    ${log.details ? `<div>Details: ${log.details}</div>` : ''}
+                                </div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    activityHtml += '<p style="text-align: center; color: #6B7280;">No activity logs found for this user.</p>';
+                }
+                
+                activityHtml += `
+                        </div>
+                        <div style="text-align: center; margin-top: 2rem;">
+                            <button class="btn-secondary" onclick="this.closest('.modal-overlay').remove()">Close</button>
+                        </div>
+                    </div>
+                `;
+                
+                modal.className = 'modal-overlay';
+                modal.innerHTML = activityHtml;
+                document.body.appendChild(modal);
+                
+            } catch (error) {
+                console.error('Error loading user activity:', error);
+                showNotification('Failed to load user activity', 'error');
+            }
+        }
+
+        function managePermissions(role) {
+            alert(`Managing permissions for ${role} role`);
+            // Implementation would open permissions management interface
+        }
+
+        // Enhanced Audit & Compliance Functions
+        async function loadAuditLogs() {
+            try {
+                const fromDate = document.getElementById('audit-from-date')?.value;
+                const toDate = document.getElementById('audit-to-date')?.value;
+                
+                let url = '/api/audit/logs';
+                if (fromDate && toDate) {
+                    url += `?from=${fromDate}&to=${toDate}`;
+                }
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                const auditTableBody = document.getElementById('audit-logs-list');
+                if (auditTableBody) {
+                    auditTableBody.innerHTML = '';
+                    
+                    if (data.logs && data.logs.length > 0) {
+                        data.logs.forEach(log => {
+                            const row = document.createElement('tr');
+                            const timestamp = new Date(log.timestamp).toLocaleString();
+                            const statusClass = log.status === 'success' ? 'badge-success' : 'badge-danger';
+                            
+                            row.innerHTML = `
+                                <td>${timestamp}</td>
+                                <td>${log.user_name || 'System'}</td>
+                                <td><code>${log.action}</code></td>
+                                <td>${log.resource}</td>
+                                <td><span class="badge ${statusClass}">${log.status}</span></td>
+                                <td><button class="btn-sm" onclick="viewLogDetails('${log.log_id}', '${log.details || 'No details available'}')">Details</button></td>
+                            `;
+                            auditTableBody.appendChild(row);
+                        });
+                    } else {
+                        auditTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No audit logs found</td></tr>';
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading audit logs:', error);
+                showNotification('Failed to load audit logs', 'error');
+            }
+        }
+
+        function viewLogDetails(logId, details) {
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center;';
+            modal.innerHTML = `
+                <div style="background: white; padding: 2rem; border-radius: 0.75rem; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;">
+                    <h2 style="margin-bottom: 1.5rem;">Audit Log Details</h2>
+                    <div style="background: #F9FAFB; padding: 1rem; border-radius: 0.5rem; font-family: monospace; white-space: pre-wrap;">
+${details}
+                    </div>
+                    <div style="text-align: center; margin-top: 2rem;">
+                        <button class="btn-secondary" onclick="this.closest('.modal-overlay').remove()">Close</button>
+                    </div>
+                </div>
+            `;
+            modal.className = 'modal-overlay';
+            document.body.appendChild(modal);
+        }
+
+        function exportAuditLog() {
+            const fromDate = document.getElementById('audit-from-date')?.value;
+            const toDate = document.getElementById('audit-to-date')?.value;
+            
+            let url = '/api/audit/export';
+            if (fromDate && toDate) {
+                url += `?from=${fromDate}&to=${toDate}`;
+            }
+            
+            // Create a temporary link to download the file
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `audit_logs_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            
+            showNotification('Audit log export started', 'info');
+        }
+
+        async function verifyCompliance(type) {
+            try {
+                showNotification(`Running ${type} compliance verification...`, 'info');
+                
+                const response = await fetch(`/api/compliance/verify/${type}`);
+                const data = await response.json();
+                
+                const modal = document.createElement('div');
+                modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center;';
+                
+                const statusClass = data.compliant ? 'badge-success' : 'badge-danger';
+                const statusText = data.compliant ? 'COMPLIANT' : 'NON-COMPLIANT';
+                
+                modal.innerHTML = `
+                    <div style="background: white; padding: 2rem; border-radius: 0.75rem; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;">
+                        <h2 style="margin-bottom: 1.5rem;">${type} Compliance Report</h2>
+                        <div style="text-align: center; margin-bottom: 2rem;">
+                            <span class="badge ${statusClass}" style="font-size: 1.2rem; padding: 0.5rem 1rem;">${statusText}</span>
+                        </div>
+                        <div style="background: #F9FAFB; padding: 1rem; border-radius: 0.5rem;">
+                            <h4>Compliance Details:</h4>
+                            <ul>
+                                ${data.details ? data.details.map(detail => `<li>${detail}</li>`).join('') : '<li>No details available</li>'}
+                            </ul>
+                        </div>
+                        <div style="text-align: center; margin-top: 2rem;">
+                            <button class="btn-secondary" onclick="this.closest('.modal-overlay').remove()">Close</button>
+                        </div>
+                    </div>
+                `;
+                modal.className = 'modal-overlay';
+                document.body.appendChild(modal);
+                
+            } catch (error) {
+                console.error('Error verifying compliance:', error);
+                showNotification(`Failed to verify ${type} compliance`, 'error');
+            }
+        }
+
+        // Enhanced Reports & Analytics Functions
+        async function loadReports() {
+            try {
+                const response = await fetch('/api/hr/analytics');
+                const data = await response.json();
+                
+                // Update dashboard statistics if available
+                if (data.pipeline) {
+                    updateAnalyticsDashboard(data);
+                }
+                
+                console.log('Analytics data loaded:', data);
+            } catch (error) {
+                console.error('Error loading reports:', error);
+                showNotification('Failed to load analytics data', 'error');
+            }
+        }
+
+        function updateAnalyticsDashboard(data) {
+            // Update key metrics in the dashboard
+            const metricsContainer = document.getElementById('analytics-metrics');
+            if (metricsContainer && data.pipeline) {
+                metricsContainer.innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-icon">👥</div>
+                        <div class="stat-info">
+                            <h3>${data.pipeline.totalCandidates || 0}</h3>
+                            <p>Total Candidates</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⭐</div>
+                        <div class="stat-info">
+                            <h3>${data.pipeline.shortlisted || 0}</h3>
+                            <p>Shortlisted</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📅</div>
+                        <div class="stat-info">
+                            <h3>${data.pipeline.interviewsScheduled || 0}</h3>
+                            <p>Interviews Scheduled</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-info">
+                            <h3>${data.pipeline.interviewsCompleted || 0}</h3>
+                            <p>Interviews Completed</p>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        async function generateReport(reportType) {
+            try {
+                showNotification(`Generating ${reportType} report...`, 'info');
+                
+                const response = await fetch(`/api/reports/generate/${reportType}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification(`${reportType} report generated successfully`, 'success');
+                    loadReports(); // Refresh the reports list
+                } else {
+                    showNotification(`Failed to generate ${reportType} report`, 'error');
+                }
+            } catch (error) {
+                console.error('Error generating report:', error);
+                showNotification(`Failed to generate ${reportType} report`, 'error');
+            }
+        }
+
+        function downloadReport(reportId, reportName) {
+            const a = document.createElement('a');
+            a.href = `/api/reports/download/${reportId}`;
+            a.download = `${reportName}_${new Date().toISOString().split('T')[0]}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            
+            showNotification('Report download started', 'info');
+        }
+
+        function viewReport(reportId, reportName) {
+            window.open(`/api/reports/view/${reportId}`, '_blank');
+            showNotification(`Opening ${reportName} report`, 'info');
+        }
+
+        // Notification System
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 1rem 1.5rem;
+                border-radius: 0.5rem;
+                color: white;
+                font-weight: 500;
+                z-index: 10000;
+                max-width: 400px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                opacity: 0;
+                transform: translateX(100%);
+                transition: all 0.3s ease;
+            `;
+            
+            const colors = {
+                success: '#10B981',
+                error: '#EF4444',
+                warning: '#F59E0B',
+                info: '#3B82F6'
+            };
+            
+            notification.style.background = colors[type] || colors.info;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            // Animate in
+            setTimeout(() => {
+                notification.style.opacity = '1';
+                notification.style.transform = 'translateX(0)';
+            }, 100);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 5000);
+        }
+
+        // Logout function
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('user');
+                localStorage.removeItem('currentUser');
+                window.location.href = 'login.html';
+            }
+        }
+
+        // Settings functions
+        function toggleGPT5Mini() {
+            const checkbox = document.getElementById('gpt5-mini-enabled');
+            const isEnabled = checkbox.checked;
+            
+            // Show notification about the change
+            if (isEnabled) {
+                showNotification('GPT-5 mini enabled for all clients', 'success');
+            } else {
+                showNotification('GPT-5 mini disabled for all clients', 'warning');
+            }
+            
+            // Here you would typically save to backend
+            localStorage.setItem('gpt5MiniEnabled', isEnabled);
+        }
+
+        async function saveSettings() {
+            try {
+                const settings = {
+                    gpt5MiniEnabled: document.getElementById('gpt5-mini-enabled').checked,
+                    aiTimeout: document.getElementById('ai-timeout').value,
+                    maxRequests: document.getElementById('max-requests').value,
+                    systemName: document.getElementById('system-name').value,
+                    sessionTimeout: document.getElementById('session-timeout').value,
+                    maintenanceMode: document.getElementById('maintenance-mode').checked,
+                    twoFactorAuth: document.getElementById('two-factor-auth').checked,
+                    passwordPolicy: document.getElementById('password-policy').value,
+                    loginAttempts: document.getElementById('login-attempts').value,
+                    smtpServer: document.getElementById('smtp-server').value,
+                    smtpPort: document.getElementById('smtp-port').value,
+                    emailNotifications: document.getElementById('email-notifications').checked
+                };
+
+                // In a real application, you would send this to your backend
+                // const response = await fetch('/api/settings', {
+                //     method: 'POST',
+                //     headers: { 'Content-Type': 'application/json' },
+                //     body: JSON.stringify(settings)
+                // });
+
+                // For now, we'll just save to localStorage
+                localStorage.setItem('systemSettings', JSON.stringify(settings));
+                
+                showNotification('Settings saved successfully!', 'success');
+            } catch (error) {
+                console.error('Error saving settings:', error);
+                showNotification('Failed to save settings', 'error');
+            }
+        }
+
+        function resetSettings() {
+            if (confirm('Are you sure you want to reset all settings to defaults?')) {
+                // Reset form values to defaults
+                document.getElementById('gpt5-mini-enabled').checked = true;
+                document.getElementById('ai-timeout').value = 30;
+                document.getElementById('max-requests').value = 100;
+                document.getElementById('system-name').value = 'MAG-Fi AI System';
+                document.getElementById('session-timeout').value = 30;
+                document.getElementById('maintenance-mode').checked = false;
+                document.getElementById('two-factor-auth').checked = true;
+                document.getElementById('password-policy').value = 'standard';
+                document.getElementById('login-attempts').value = 5;
+                document.getElementById('smtp-server').value = 'smtp.magfi.com';
+                document.getElementById('smtp-port').value = 587;
+                document.getElementById('email-notifications').checked = true;
+                
+                showNotification('Settings reset to defaults', 'info');
+            }
+        }
+
+        function loadSettings() {
+            try {
+                const savedSettings = localStorage.getItem('systemSettings');
+                if (savedSettings) {
+                    const settings = JSON.parse(savedSettings);
+                    
+                    // Apply saved settings to form elements
+                    document.getElementById('gpt5-mini-enabled').checked = settings.gpt5MiniEnabled !== false;
+                    if (settings.aiTimeout) document.getElementById('ai-timeout').value = settings.aiTimeout;
+                    if (settings.maxRequests) document.getElementById('max-requests').value = settings.maxRequests;
+                    if (settings.systemName) document.getElementById('system-name').value = settings.systemName;
+                    if (settings.sessionTimeout) document.getElementById('session-timeout').value = settings.sessionTimeout;
+                    document.getElementById('maintenance-mode').checked = settings.maintenanceMode || false;
+                    document.getElementById('two-factor-auth').checked = settings.twoFactorAuth !== false;
+                    if (settings.passwordPolicy) document.getElementById('password-policy').value = settings.passwordPolicy;
+                    if (settings.loginAttempts) document.getElementById('login-attempts').value = settings.loginAttempts;
+                    if (settings.smtpServer) document.getElementById('smtp-server').value = settings.smtpServer;
+                    if (settings.smtpPort) document.getElementById('smtp-port').value = settings.smtpPort;
+                    document.getElementById('email-notifications').checked = settings.emailNotifications !== false;
+                }
+            } catch (error) {
+                console.error('Error loading settings:', error);
+            }
+        }
+
+        // Close modals when clicking outside
+        // Initialize dashboard on page load
+        async function initializeDashboard() {
+            try {
+                // Load admin overview stats
+                const response = await fetch('/api/dashboard/overview');
+                const data = await response.json();
+                
+                // Update overview statistics
+                if (data.users) {
+                    const totalUsers = data.users.total;
+                    const userStatsCard = document.querySelector('.stats-grid .stat-card:first-child .stat-info h3');
+                    if (userStatsCard) {
+                        userStatsCard.textContent = totalUsers;
+                    }
+                }
+                
+                // Load initial data for active section
+                const activeSection = document.querySelector('.content-section.active');
+                if (activeSection) {
+                    const sectionId = activeSection.id.replace('-section', '');
+                    switch(sectionId) {
+                        case 'overview':
+                            // Overview already loaded above
+                            break;
+                        case 'users':
+                            loadUsers();
+                            break;
+                        case 'audit':
+                            loadAuditLogs();
+                            break;
+                        case 'reports':
+                            loadReports();
+                            break;
+                        case 'settings':
+                            loadSettings();
+                            break;
+                    }
+                }
+                
+                showNotification('Admin dashboard loaded successfully', 'success');
+            } catch (error) {
+                console.error('Error initializing dashboard:', error);
+                showNotification('Failed to load dashboard data', 'error');
+            }
+        }
+
+        window.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) {
+                e.target.classList.remove('show');
+            }
+        });
+
+        // Initialize dashboard when page loads
+        document.addEventListener('DOMContentLoaded', initializeDashboard);
+        
+        console.log('MAG-Fi Admin Dashboard initialized with enhanced functionality');
+    </script>
+</body>
+</html>
